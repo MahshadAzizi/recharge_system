@@ -33,3 +33,10 @@ class CreditRequest(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True,
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['seller'],
+                                    condition=models.Q(status='pending'),
+                                    name='unique_pending_request_per_seller')
+        ]

@@ -30,7 +30,9 @@ class CreditRequestSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         seller = validated_data['seller']
-        lock = AccountingLock.get_lock(seller)
-        with lock:
-            credit_request = CreditRequest.objects.create(**validated_data)
+        locked_seller = Seller.objects.select_for_update().get(id=seller)
+
+        # lock = AccountingLock.get_lock(seller)
+        # with lock:
+        credit_request = CreditRequest.objects.create(**validated_data)
         return credit_request
