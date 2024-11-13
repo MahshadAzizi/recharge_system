@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from management.models import CreditRequest
+
+
+@admin.register(CreditRequest)
+class CreditRequestAdmin(admin.ModelAdmin):
+    pass
