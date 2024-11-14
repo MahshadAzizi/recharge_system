@@ -11,6 +11,6 @@ class CreditIncreaseRequestView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({
-            "message": f"Credit increase request for {serializer.validated_data['amount']} submitted successfully."
+            'message': f"Credit increase request for {serializer.validated_data['amount']} submitted successfully."
         }, status=status.HTTP_201_CREATED)
 
