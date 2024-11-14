@@ -1,1 +1,2 @@
 from .credit_request import CreditRequestSerializer
+from .approve_credit_request import AdminCreditApprovalSerializer

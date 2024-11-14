@@ -1,1 +1,2 @@
 from .test_credit_increase_request import CreditRequestTestCase
+from .test_admin_credit_request_aproval import AdminCreditApprovalTestCase
