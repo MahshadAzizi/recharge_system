@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from accounts.api.utils import AccountingLock
 from accounts.models import Seller
 from management.models import CreditRequest
 
@@ -12,27 +11,24 @@ class CreditRequestSerializer(serializers.ModelSerializer):
         fields = [
             'seller',
             'amount',
+            'request_id'
         ]
 
-    def validate(self, attrs):
-        seller = attrs.get('seller')
-        amount = attrs.get('amount')
-
-        try:
-            seller = Seller.objects.get(id=seller.id)
-        except Seller.DoesNotExist:
+    def validate_seller(self, seller):
+        if not Seller.objects.filter(id=seller.id).exists():
             raise ValidationError("Seller not found.")
+        return seller
 
+    def validate_amount(self, amount):
         if amount <= 0:
             raise ValidationError("Requested amount must be greater than zero.")
+        return amount
 
+    def validate(self, attrs):
+        request_id = attrs.get('request_id')
+        if CreditRequest.objects.filter(request_id=request_id).exists():
+            raise ValidationError("Duplicate request detected with the same request_id.")
         return attrs
 
     def create(self, validated_data):
-        seller = validated_data['seller']
-        locked_seller = Seller.objects.select_for_update().get(id=seller)
-
-        # lock = AccountingLock.get_lock(seller)
-        # with lock:
-        credit_request = CreditRequest.objects.create(**validated_data)
-        return credit_request
+        return CreditRequest.objects.create(**validated_data)

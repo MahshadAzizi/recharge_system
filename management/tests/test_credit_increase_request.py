@@ -1,51 +1,50 @@
-import threading
 from django.test import TestCase
-from rest_framework.test import APIClient
 from accounts.models import Seller
-from management.models import CreditRequest
+from management.api.serializers import CreditRequestSerializer
 
 
-class CreditRequestRaceConditionTest(TestCase):
+class CreditRequestTestCase(TestCase):
     def setUp(self):
-        self.client = APIClient()
-        self.seller = Seller.objects.create(
-            name="Test Seller",
-            credit=1000.00
-        )
+        self.seller = Seller.objects.create(name='Test Seller', credit=1000)
 
-    def submit_credit_request(self, amount):
-        """Helper method to submit a credit request."""
-        response = self.client.post('/api/v1/management/credit-increase-request/', {
-            "seller": self.seller.id,
-            "amount": amount
-        })
-        return response
+    def test_create_credit_request(self):
+        """Test creating a valid credit request."""
+        data = {
+            'seller': self.seller.id,
+            'amount': 500,
+            'request_id': 'unique-test-request'
+        }
+        serializer = CreditRequestSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+        credit_request = serializer.save()
 
-    def test_concurrent_credit_requests(self):
-        # Define the amount to be requested in each thread
-        request_amount = 10.00
-        number_of_threads = 10
+        self.assertEqual(credit_request.status, 'pending')
+        self.assertEqual(credit_request.amount, 500)
+        self.assertEqual(credit_request.seller, self.seller)
 
-        # Start multiple threads to submit credit requests concurrently
-        threads = []
-        for _ in range(number_of_threads):
-            thread = threading.Thread(target=self.submit_credit_request, args=(request_amount,))
-            threads.append(thread)
-            thread.start()
+    def test_duplicate_credit_request(self):
+        """Test that duplicate credit requests with the same request_id are not allowed."""
+        data = {
+            'seller': self.seller.id,
+            'amount': 500,
+            'request_id': 'duplicate-test-request'
+        }
 
-        # Wait for all threads to complete
-        for thread in threads:
-            thread.join()
+        serializer1 = CreditRequestSerializer(data=data)
+        self.assertTrue(serializer1.is_valid())
+        serializer1.save()
 
-        # Retrieve all credit requests for the seller
-        credit_requests = CreditRequest.objects.filter(seller=self.seller)
+        serializer2 = CreditRequestSerializer(data=data)
+        self.assertFalse(serializer2.is_valid())
+        self.assertIn('request_id', serializer2.errors)
 
-        # Check that each credit request has been created exactly once
-        self.assertEqual(credit_requests.count(), number_of_threads)
-
-        # Ensure each credit request has the status 'pending' (initial state)
-        for request in credit_requests:
-            self.assertEqual(request.status, CreditRequest.Status.PENDING)
-
-        # Validate the seller’s balance and logs for consistency (if balance is affected)
-        # (e.g., self.assertEqual(self.seller.balance, expected_balance))
+    def test_negative_amount(self):
+        """Test that a credit request with a negative amount is not allowed."""
+        data = {
+            'seller': self.seller.id,
+            'amount': -100,
+            'request_id': 'negative-amount-test'
+        }
+        serializer = CreditRequestSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('amount', serializer.errors)

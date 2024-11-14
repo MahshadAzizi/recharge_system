@@ -15,6 +15,12 @@ class CreditRequest(models.Model):
         decimal_places=2,
     )
 
+    request_id = models.CharField(
+        max_length=100,
+        unique=True,
+        null=True,
+    )
+
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'
         APPROVED = 'approved', 'Approved'
@@ -34,9 +40,9 @@ class CreditRequest(models.Model):
         auto_now=True,
     )
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['seller'],
-                                    condition=models.Q(status='pending'),
-                                    name='unique_pending_request_per_seller')
-        ]
+    # class Meta:
+    #     constraints = [
+    #         models.UniqueConstraint(fields=['seller'],
+    #                                 condition=models.Q(status='pending'),
+    #                                 name='unique_pending_request_per_seller')
+    #     ]
