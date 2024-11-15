@@ -18,8 +18,6 @@ class RechargeView(APIView):
                     'date': recharge.date
                 }, status=status.HTTP_201_CREATED)
             except ValidationError as e:
-                # Return the error in a consistent format
                 return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            # Return the validation errors in a consistent format
             return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

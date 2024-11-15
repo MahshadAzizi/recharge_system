@@ -19,13 +19,11 @@ class RechargeSerializer(serializers.ModelSerializer):
         seller = data.get('seller')
         amount = data.get('amount')
 
-        # Check if the seller exists
         try:
             seller = Seller.objects.get(id=seller.id)
         except Seller.DoesNotExist:
             raise ValidationError("Seller not found.")
 
-        # Check if the seller has enough credit
         if seller.credit < amount:
             raise ValidationError("Insufficient credit.")
 
@@ -39,22 +37,18 @@ class RechargeSerializer(serializers.ModelSerializer):
         # Lock the seller to prevent race conditions
         seller = Seller.objects.select_for_update().get(id=seller.id)
 
-        # Double-check if the seller has enough credit after acquiring the lock
         if seller.credit < amount:
             raise ValidationError("Insufficient credit after locking.")
 
-        # Deduct the amount from the seller's credit
         seller.credit -= amount
         seller.save()
 
-        # Create a transaction record
         Transaction.objects.create(
             seller=seller,
             amount=amount,
             transaction_type=Transaction.Type.DEBIT
         )
 
-        # Create a recharge record
         recharge = Recharge.objects.create(**self.validated_data)
 
         return recharge

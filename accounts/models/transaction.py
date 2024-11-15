@@ -7,6 +7,7 @@ class Transaction(models.Model):
         Seller,
         on_delete=models.CASCADE,
         related_name='transactions',
+        db_index=True
     )
 
     amount = models.DecimalField(

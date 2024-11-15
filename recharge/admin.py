@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from recharge.models import Recharge
+
+
+@admin.register(Recharge)
+class RechargeAdmin(admin.ModelAdmin):
+    pass
