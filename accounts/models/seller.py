@@ -13,5 +13,13 @@ class Seller(models.Model):
         default=0,
     )
 
+    def add_credit(self, amount):
+        self.credit += amount
+        self.save()
+
+    def deduct_credit(self, amount):
+        self.credit -= amount
+        self.save()
+
     def __str__(self):
         return self.name
