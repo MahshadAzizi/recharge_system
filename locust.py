@@ -35,11 +35,10 @@ class RechargeUser(HttpUser):
         Task to simulate a seller sending a credit request.
         Simulate a duplicate request_id to test failure cases.
         """
-        # Create a new request_id, but sometimes force a duplicate
-        if random.random() < 0.5 and previous_request_ids:  # 50% chance to reuse a request_id
-            request_id = random.choice(list(previous_request_ids))  # Pick a random previous request_id
+        if random.random() < 0.5 and previous_request_ids:
+            request_id = random.choice(list(previous_request_ids))
         else:
-            request_id = str(uuid.uuid4())  # Generate a new request_id
+            request_id = str(uuid.uuid4())
 
         payload = {
             "seller": random.choice(SELLER_IDS),
@@ -47,7 +46,6 @@ class RechargeUser(HttpUser):
             "request_id": request_id,
         }
 
-        # Store the request_id for potential reuse
         previous_request_ids.add(request_id)
 
         response = self.client.post("/api/v1/management/credit-increase-request/", json=payload)
