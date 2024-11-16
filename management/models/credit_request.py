@@ -40,9 +40,10 @@ class CreditRequest(models.Model):
         auto_now=True,
     )
 
-    # class Meta:
-    #     constraints = [
-    #         models.UniqueConstraint(fields=['seller'],
-    #                                 condition=models.Q(status='pending'),
-    #                                 name='unique_pending_request_per_seller')
-    #     ]
+    @property
+    def is_pending(self):
+        return self.status == self.Status.PENDING
+
+    def mark_as_processed(self, status):
+        self.status = status
+        self.save()
