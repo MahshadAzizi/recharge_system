@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from accounts.models import Seller, Transaction
+from accounts.services import create_transaction
 from recharge.models import Recharge
 
 
@@ -16,17 +17,9 @@ class RechargeSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        seller = data.get('seller')
         amount = data.get('amount')
-
-        try:
-            seller = Seller.objects.get(id=seller.id)
-        except Seller.DoesNotExist:
-            raise ValidationError("Seller not found.")
-
-        if seller.credit < amount:
-            raise ValidationError("Insufficient credit.")
-
+        if amount <= 0:
+            raise ValidationError('Amount must be greater than zero.')
         return data
 
     @transaction.atomic
@@ -34,21 +27,19 @@ class RechargeSerializer(serializers.ModelSerializer):
         amount = self.validated_data['amount']
         seller = self.validated_data['seller']
 
-        # Lock the seller to prevent race conditions
-        seller = Seller.objects.select_for_update().get(id=seller.id)
+        try:
+            seller = Seller.objects.select_for_update().get(id=seller.id)
+        except Seller.DoesNotExist:
+            raise ValidationError('Seller not found.')
 
         if seller.credit < amount:
-            raise ValidationError("Insufficient credit after locking.")
+            raise ValidationError('Insufficient credit after locking.')
 
-        seller.credit -= amount
-        seller.save()
+        seller.deduct_credit(amount)
 
-        Transaction.objects.create(
-            seller=seller,
-            amount=amount,
-            transaction_type=Transaction.Type.DEBIT
-        )
+        create_transaction(seller=seller,
+                           amount=amount,
+                           transaction_type=Transaction.Type.DEBIT)
 
         recharge = Recharge.objects.create(**self.validated_data)
-
         return recharge
