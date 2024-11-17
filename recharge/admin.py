@@ -5,4 +5,13 @@ from recharge.models import Recharge
 
 @admin.register(Recharge)
 class RechargeAdmin(admin.ModelAdmin):
-    pass
+    list_display = [
+        'seller',
+        'phone_number',
+        'amount',
+    ]
+
+    list_filter = [
+        'seller',
+        'phone_number',
+    ]

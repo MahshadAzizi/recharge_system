@@ -5,4 +5,13 @@ from management.models import CreditRequest
 
 @admin.register(CreditRequest)
 class CreditRequestAdmin(admin.ModelAdmin):
-    pass
+    list_display = [
+        'seller',
+        'amount',
+        'status',
+    ]
+
+    list_filter = [
+        'seller',
+        'status',
+    ]
